@@ -56,18 +56,35 @@ class myHandler(BaseHTTPRequestHandler):
 	def do_POST(self):
 		if self.path=="/send":
 			form = cgi.FieldStorage(
-				fp=self.rfile, 
+				fp=self.rfile,
 				headers=self.headers,
 				environ={'REQUEST_METHOD':'POST',
-		                 'CONTENT_TYPE':self.headers['Content-Type'],
+						 'CONTENT_TYPE':self.headers['Content-Type'],
 			})
 
-			self.nsa_queue.put(form["le_texte"].value[::-1])
+			encr_text = self.encrypt_cesar(form["le_texte"].value)
+			self.nsa_queue.put(encr_text)
 			print "Le texte en clair: %s" % form["le_texte"].value
 			self.send_response(200)
 			self.end_headers()
-			self.wfile.write(form["le_texte"].value[::-1])
-			return			
+			self.wfile.write(encr_text)
+			return
+
+		if self.path=="/send_scytal":
+			form = cgi.FieldStorage(
+				fp=self.rfile, 
+				headers=self.headers,
+				environ={'REQUEST_METHOD':'POST',
+						 'CONTENT_TYPE':self.headers['Content-Type'],
+			})
+
+			encr_text = self.encrypt_scytal(form["le_texte"].value)
+			self.nsa_queue.put(encr_text)
+			print "Le texte en clair: %s" % form["le_texte"].value
+			self.send_response(200)
+			self.end_headers()
+			self.wfile.write(encr_text)
+			return
 
 		if self.path=="/decrypt":
 			le_texte = self.nsa_queue.get()
@@ -75,15 +92,29 @@ class myHandler(BaseHTTPRequestHandler):
 			self.send_response(200)
 			self.end_headers()
 			self.wfile.write("Le texte intercepte: %s." % le_texte)
-			self.wfile.write(" Le texte decode: %s" % le_texte[::-1])
-			return			
-			
+			self.wfile.write(" Le texte decode cesar: %s" % self.decrypt_cesar(le_texte))
+			self.wfile.write(" Le texte decode scytal: %s" % self.decrypt_scytal(le_texte))
+			return
+
+	def decrypt_cesar(self, text):
+		return "DE: %s" % text
+
+	def encrypt_cesar(self, text):
+		return "EN: %s" % text
+
+	def decrypt_scytal(self, text):
+		return "DEScy: %s" % text
+
+	def encrypt_scytal(self, text):
+		return "ENScy: %s" % text
+
+
 try:
 	nsa_queue = Queue.Queue()
 
 	def handler(*args):
 		myHandler(nsa_queue, *args)
-	
+
 	#Create a web server and define the handler to manage the
 	#incoming request
 	server = HTTPServer(('', PORT_NUMBER), handler)
