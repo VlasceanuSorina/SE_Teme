@@ -4,7 +4,7 @@ from os import curdir, sep
 import cgi
 import Queue
 
-PORT_NUMBER = 8084
+PORT_NUMBER = 8082
 
 #This class will handles any incoming request from
 #the browser 
@@ -96,8 +96,10 @@ class myHandler(BaseHTTPRequestHandler):
             self.wfile.write(" Le texte decode cesar: %s" % self.decrypt_cesar(le_texte , 2))
             self.wfile.write(" Le texte decode scytal: %s" % self.decrypt_scytal(le_texte , 2))
             return
-            
+    #The function that  encrypts with Cesar code: It takes ech letter in the text,
+         #searches it in the alphabet. Encrypted nr=(abc_poz+key)%13 and text_encrypted=abc[nr]; 
     def encrypt_cesar(self, message, key):
+        
         abc = "abcdefghijklmnopqrstuvwxyz"
         text_encrypted = ''
         for leter in message:
@@ -139,27 +141,13 @@ class myHandler(BaseHTTPRequestHandler):
              rowLength = len(text) / key
         else:
             rowLength = len(text) / key + 1
-        encryptMatrix = [[' ' for i in range(rowLength)] for j in range(key)]
-        for y in range (0,key):
-         for x in range (0, rowLength):
-             if y * rowLength + x < len(text):
-                 encryptMatrix[y][x] = text[y * rowLength + x]
-        encryptedText = ''
-        for x in range (0, rowLength):
-          for y in range (0, key):
-            encryptedText+=str(encryptMatrix[y][x])
-        finalEncrypted = ''.join(encryptedText)
-        if len(text) % key == 0:
-           rowLength = len(text) / key
-        else: 
-           rowLength = len(text) / key + 1
         decryptMatrix = [[' ' for i in range(rowLength)] for j in range(key)]
         for x in range (0, rowLength):
          for y in range (0,key):
-           decryptMatrix[y][x] = finalEncrypted[x * key + y]
+           decryptMatrix[y][x] = text[x * key + y]
         decryptedText=''
-        for x in range (0, rowLength):
-          for y in range (0,key):
+        for y in range (0,key):
+          for x in range (0,rowLength):
             decryptedText+=str(decryptMatrix[y][x])
         finalDecrypted = ''.join(decryptedText)
         return finalDecrypted
